@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DIP Seminar Certificate Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Great+Vibes&family=Lora:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{
+    --navy:#2b2a7a; --red:#c8202f; --teal:#3a8f8a; --gold:#e6b800;
+    --bg:#f2f3f8; --ink:#1d1d2b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+  header{padding:20px 16px 4px;text-align:center}
+  header h1{margin:0;font-size:1.4rem;color:var(--navy)}
+  header p{margin:4px 0 0;color:#555;font-size:.9rem}
+  .panel{max-width:760px;margin:16px auto;background:#fff;border-radius:14px;padding:20px;
+    box-shadow:0 2px 14px rgba(0,0,0,.08);display:grid;gap:14px}
+  label{display:grid;gap:6px;font-weight:600;font-size:.9rem}
+  input[type=text]{padding:11px 12px;border:1px solid #c9cbe0;border-radius:8px;font:inherit;font-weight:400}
+  input[type=text]:focus{outline:2px solid var(--navy);border-color:transparent}
+  .row{display:flex;flex-wrap:wrap;gap:10px}
+  button,.btn{border:0;border-radius:8px;padding:11px 18px;font:inherit;font-weight:600;cursor:pointer;
+    background:var(--navy);color:#fff}
+  button.alt,.btn.alt{background:#e7e8f5;color:var(--navy)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .hint{font-size:.8rem;color:#666}
+  .stage-wrap{max-width:100%;overflow:auto;padding:8px 8px 40px;text-align:center}
+  #scaler{display:inline-block;transform-origin:top left}
+
+  /* ---------- Certificate (A4 landscape @ 96dpi) ---------- */
+  #cert{width:1123px;height:794px;position:relative;background:#fffdf6;text-align:center;
+    font-family:Lora,serif;color:#222;overflow:hidden;text-align:center}
+  .frame{position:absolute;inset:18px;border:6px solid var(--navy)}
+  .frame2{position:absolute;inset:32px;border:2px solid var(--gold)}
+  .corner{position:absolute;width:120px;height:120px}
+  .corner svg{display:block;overflow:visible}
+  .c1{top:32px;left:32px}
+  .c2{top:32px;right:32px;transform:scaleX(-1)}
+  .c3{bottom:32px;left:32px;transform:scaleY(-1)}
+  .c4{bottom:32px;right:32px;transform:scale(-1,-1)}
+  .content{position:absolute;inset:56px 80px 50px;display:flex;flex-direction:column;align-items:center}
+  #logoBox{height:120px;display:flex;align-items:center;justify-content:center}
+  #logoBox img{height:120px;width:auto;display:block}
+  .logo-missing,.sig-missing{border:2px dashed #aaa;border-radius:8px;padding:10px 16px;color:#777;font:500 13px Inter,sans-serif;cursor:pointer}
+  .sig-missing{margin-bottom:6px}
+  @media print{.logo-missing,.sig-missing{display:none}}
+  .uni{font-family:Cinzel,serif;font-weight:700;color:var(--navy);font-size:26px;letter-spacing:2px;margin-top:6px}
+  .title{font-family:Cinzel,serif;font-weight:700;font-size:44px;color:var(--red);letter-spacing:4px;margin-top:10px}
+  .sub{font-size:16px;letter-spacing:3px;text-transform:uppercase;color:#555;margin-top:2px}
+  .certify{margin-top:18px;font-style:italic;font-size:18px}
+  .name{font-family:'Great Vibes',cursive;font-size:60px;color:var(--navy);line-height:1.1;margin:2px 0;
+    border-bottom:2px solid var(--gold);padding:0 40px;min-width:380px}
+  .body{font-size:18px;line-height:1.65;max-width:850px;margin-top:12px}
+  .body b{color:var(--navy)}
+  .sig{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;padding:0 70px}
+  .sig div{width:290px;text-align:center;font-size:14px}
+  .sig .line{border-top:1.5px solid #333;padding-top:6px}
+  .sig strong{display:block;font-size:16px;color:var(--navy)}
+  #sigBox{height:78px;display:flex;align-items:flex-end;justify-content:center}
+  #sigBox img{max-height:78px;max-width:200px;width:auto;mix-blend-mode:multiply;display:block}
+
+  @media print{
+    @page{size:A4 landscape;margin:0}
+    body{background:#fff}
+    header,.panel,.hint{display:none!important}
+    .stage-wrap{padding:0;overflow:visible}
+    #scaler{transform:none!important}
+    #cert{width:297mm;height:210mm;zoom:.9}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>DIP Seminar Certificate Generator</h1>
+  <p>Central University of Karnataka · Digital Image Processing</p>
+</header>
+
+<form class="panel" id="form">
+  <label>Student name
+    <input type="text" id="name" placeholder="e.g. Ananya Rao" required autocomplete="name">
+  </label>
+  <label>DIP project title
+    <input type="text" id="project" placeholder="Enter your DIP project title" required>
+  </label>
+  <div class="row">
+    <button type="submit">Generate certificate</button>
+    <button type="button" class="alt" id="png" disabled>Download PNG</button>
+    <button type="button" class="alt" id="print" disabled>Print / Save PDF</button>
+    <label class="btn alt" style="display:inline-block;margin:0">Upload logo
+      <input type="file" id="logoFile" accept="image/*" hidden>
+    </label>
+    <label class="btn alt" style="display:inline-block;margin:0">Upload signature
+      <input type="file" id="sigFile" accept="image/*" hidden>
+    </label>
+  </div>
+  <div class="hint">The logo and signature load from <code>logo.png</code> and <code>signature.png</code> in the same folder as this file. If either doesn't appear, use the upload buttons.</div>
+</form>
+
+<div class="stage-wrap">
+  <div id="scaler">
+    <div id="cert">
+      <div class="frame"></div><div class="frame2"></div>
+      <div class="corner c1"></div><div class="corner c2"></div><div class="corner c3"></div><div class="corner c4"></div>
+      <div class="content">
+        <div id="logoBox"></div>
+        <div class="uni">CENTRAL UNIVERSITY OF KARNATAKA</div>
+        <div class="title">CERTIFICATE</div>
+        <div class="sub">of Participation</div>
+        <div class="certify">This is to certify that</div>
+        <div class="name" id="outName">Your Name</div>
+        <div class="body">
+          has successfully presented the project titled
+          “<b id="outProject">Your DIP Project</b>”
+          in the subject of <b>Digital Image Processing (DIP)</b> at the seminar
+          held from <b>2<sup>nd</sup> November</b> to <b>6<sup>th</sup> November 2026</b>.
+        </div>
+        <div class="sig">
+          <div><span id="outDate"></span><div class="line">Date</div></div>
+          <div><div id="sigBox"></div><div class="line"><strong>Dr. Kagale Madhuri Raghunath</strong>Faculty, Digital Image Processing</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const logoBox = $('logoBox');
+  let logoSrc = null;
+
+  function setLogo(src){
+    logoSrc = src;
+    logoBox.innerHTML = '';
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.alt = 'Central University of Karnataka logo';
+    img.onload = () => logoBox.appendChild(img);
+    img.onerror = showMissing;
+    img.src = src;
+  }
+  function showMissing(){
+    logoBox.innerHTML = '<div class="logo-missing" onclick="document.getElementById(\'logoFile\').click()">Click to add logo</div>';
+  }
+
+  // try saved upload first, then logo.png next to this file
+  let saved = null;
+  try { saved = localStorage.getItem('cukLogo'); } catch(e){}
+  setLogo(saved || 'logo.png');
+
+  $('logoFile').addEventListener('change', e => {
+    const f = e.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      setLogo(r.result);
+      try { localStorage.setItem('cukLogo', r.result); } catch(e){}
+    };
+    r.readAsDataURL(f);
+  });
+
+  // signature: signature.png next to this file, or an uploaded image
+  const sigBox = $('sigBox');
+  function setSig(src){
+    sigBox.innerHTML = '';
+    const img = new Image();
+    img.alt = 'Faculty signature';
+    img.onload = () => {
+      // make the white background transparent so it blends into the certificate (also in PNG export)
+      try {
+        const c = document.createElement('canvas');
+        c.width = img.naturalWidth; c.height = img.naturalHeight;
+        const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+        const d = x.getImageData(0, 0, c.width, c.height), p = d.data;
+        for (let i = 0; i < p.length; i += 4) {
+          const lum = (p[i] + p[i+1] + p[i+2]) / 3;
+          if (lum > 235) p[i+3] = 0; else if (lum > 170) p[i+3] = Math.round(255 * (235 - lum) / 65);
+        }
+        x.putImageData(d, 0, 0);
+        img.onload = null; img.src = c.toDataURL('image/png');
+      } catch (e) { /* tainted canvas on file:// — falls back to CSS blend */ }
+      sigBox.appendChild(img);
+    };
+    img.onerror = () => {
+      sigBox.innerHTML = '<div class="sig-missing" onclick="document.getElementById(\'sigFile\').click()">Click to add signature</div>';
+    };
+    img.src = src;
+  }
+  let savedSig = null;
+  try { savedSig = localStorage.getItem('cukSig'); } catch(e){}
+  setSig(savedSig || 'signature.png');
+
+  $('sigFile').addEventListener('change', e => {
+    const f = e.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      setSig(r.result);
+      try { localStorage.setItem('cukSig', r.result); } catch(e){}
+    };
+    r.readAsDataURL(f);
+  });
+
+  // decorative corner ornaments (drawn once, mirrored per corner with CSS)
+  const ORNAMENT = `<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0 0 L34 0 A34 34 0 0 1 0 34 Z" fill="#2b2a7a"/>
+    <path d="M44 0 A44 44 0 0 1 0 44" fill="none" stroke="#e6b800" stroke-width="2"/>
+    <path d="M60 0 A60 60 0 0 1 0 60" fill="none" stroke="#c8202f" stroke-width="1.5"/>
+    <path d="M78 0 A78 78 0 0 1 0 78" fill="none" stroke="#2b2a7a" stroke-width="3"/>
+    <path d="M96 0 A96 96 0 0 1 0 96" fill="none" stroke="#e6b800" stroke-width="2"/>
+    <g fill="#e6b800">
+      <ellipse rx="11" ry="4.5" transform="translate(82.7 26.9) rotate(18)"/>
+      <ellipse rx="11" ry="4.5" transform="translate(61.5 61.5) rotate(45)"/>
+      <ellipse rx="11" ry="4.5" transform="translate(26.9 82.7) rotate(72)"/>
+    </g>
+    <g fill="#c8202f">
+      <circle cx="93.5" cy="54" r="3"/><circle cx="54" cy="93.5" r="3"/>
+      <circle cx="108" cy="0" r="3"/><circle cx="0" cy="108" r="3"/>
+    </g>
+  </svg>`;
+  document.querySelectorAll('.corner').forEach(c => c.innerHTML = ORNAMENT);
+
+  // scale certificate to fit screen width
+  function fit(){
+    const avail = Math.min(window.innerWidth - 16, 1123);
+    const s = avail / 1123;
+    const sc = $('scaler');
+    sc.style.transform = `scale(${s})`;
+    sc.style.width = '1123px';
+    sc.style.height = (794 * s) + 'px';
+    sc.style.marginBottom = '0';
+  }
+  window.addEventListener('resize', fit); fit();
+
+  $('form').addEventListener('submit', e => {
+    e.preventDefault();
+    $('outName').textContent = $('name').value.trim();
+    $('outProject').textContent = $('project').value.trim();
+    $('outDate').textContent = new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+    $('png').disabled = false; $('print').disabled = false;
+    $('cert').scrollIntoView({behavior:'smooth', block:'start'});
+  });
+
+  $('print').addEventListener('click', () => window.print());
+
+  $('png').addEventListener('click', async () => {
+    const sc = $('scaler'), old = sc.style.transform;
+    sc.style.transform = 'none';
+    try{
+      const canvas = await html2canvas($('cert'), {scale:2, useCORS:true, backgroundColor:'#fffdf6',
+        ignoreElements: el => el.classList && (el.classList.contains('sig-missing') || el.classList.contains('logo-missing'))});
+      const a = document.createElement('a');
+      a.download = 'DIP-Certificate-' + ($('name').value.trim().replace(/\s+/g,'_') || 'student') + '.png';
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    } finally { sc.style.transform = old; }
+  });
+</script>
+</body>
+</html>
